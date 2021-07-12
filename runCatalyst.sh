@@ -19,6 +19,7 @@ fi
 
 if [[ -z $PORTDIR ]] && [[ -f /etc/portage/make.conf ]]
 then
+    mkdir tmp
     echo '#!/bin/sh' > tmp/buildEnv.sh
     chmod a+x tmp/buildEnv.sh
     cat /etc/portage/make.conf | grep '^PORTDIR=' >> tmp/buildEnv.sh
