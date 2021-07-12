@@ -24,6 +24,8 @@ then
     chmod a+x tmp/buildEnv.sh
     cat /etc/portage/make.conf | grep '^PORTDIR=' >> tmp/buildEnv.sh
     source ${PWD}/tmp/buildEnv.sh
+    rm tmp/buildEnv.sh
+    rmdir tmp
 else
     PORTDIR=/var/tmp/catalyst-container/repos/gentoo
 fi
