@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Used to create Gentoo stage3 and portage containers simply by specifying a
-# TARGET env variable.
-# Example usage: TARGET=stage3-amd64 ./build.sh
+# Used to create Gentoo seed and portage containers simply by specifying a
+# SEED env variable.
+# Example usage: SEED=./stage3-amd64-latest.tar.xz ./build.sh
 
 if [[ -z "$SEED" ]]; then
 	echo "No seed specified"
@@ -57,7 +57,7 @@ case $ARCH in
 esac
 
 # Handle targets with special characters in the suffix
-if [[ "${TARGET}" == "stage3-amd64-hardened-nomultilib" ]]; then
+if [[ "${TARGET}" == "stage3-${ARCH}-hardened-nomultilib" ]]; then
 	SUFFIX="hardened+nomultilib"
 fi
 
@@ -66,15 +66,13 @@ if [[ -n "${SUFFIX}" ]]; then
 	SUFFIX="-${SUFFIX}"
 fi
 
-echo hi
-
 docker buildx build \
 	--file "catalyst.Dockerfile" \
 	--build-arg ARCH="${ARCH}" \
 	--build-arg MICROARCH="${MICROARCH}" \
 	--build-arg SUFFIX="${SUFFIX}" \
 	--build-arg SEED="${SEED}" \
-	--tag "${ORG}/${CONTAINER_NAME}" \
+	--tag "${ORG}/${CONTAINER_NAME}:${ARCH}" \
 	--platform "linux/${DOCKER_ARCH}" \
 	--progress plain \
 	--load \

@@ -27,23 +27,22 @@ else
     PORTDIR=/var/tmp/catalyst-container/repos/gentoo
 fi
 
-mkdir -p ${CATALYST_CONTAINER_PACKAGES_DIR} ${CATALYST_CONTAINER_BUILDS_DIR} ${CATALYST_BUILDS_DIR} ${CATALYST_PACKAGES_DIR} ${CATALYST_SNAPSHOTS_DIR} ${BUILDSH_SCRIPT_DIR} ${PORTDIR}
+mkdir -p ${CATALYST_CONTAINER_DISTFILES_CACHE_DIR} ${CATALYST_CONTAINER_BINPKGS_CACHE_DIR} ${CATALYST_BUILDS_DIR} ${CATALYST_PACKAGES_DIR} ${CATALYST_SNAPSHOTS_DIR} ${BUILDSH_SCRIPT_DIR} ${PORTDIR}
 
 cp ${SEED} ${BUILDSH_SCRIPT_DIR}/stage.tar.xz
 cp ${SPEC} ${BUILDSH_SCRIPT_DIR}/toExec.spec
 
-ls ${BUILDSH_SCRIPT_DIR}
-
 docker rm -f ${CONTAINER_NAME}
 export CONTAINER_NAME ARCH
 ${PWD}/build.sh \
- && docker run -it --privileged --name ${CONTAINER_NAME} --mount type=bind,source=${PORTDIR},target=/var/db/repos/gentoo \
-				 --mount type=bind,source=${BUILDSH_SCRIPT_DIR},target=/var/tmp/catalyst-container/scripts \
-				 --mount type=bind,source=${CATALYST_CONTAINER_DISTFILES_CACHE_DIR},target=/var/cache/distfiles/ \
-				 --mount type=bind,source=${CATALYST_CONTAINER_BINPKGS_CACHE_DIR},target=/var/cache/binpkgs/ \
-				 --mount type=bind,source=${CATALYST_BUILDS_DIR},target=/var/tmp/catalyst/builds \
-				 --mount type=bind,source=${CATALYST_SNAPSHOTS_DIR},target=/var/tmp/catalyst/snapshots \
-				 --mount type=bind,source=${CATALYST_PACKAGES_DIR},target=/var/tmp/catalyst/packages \
+ && docker run -it --privileged --name ${CONTAINER_NAME} \
+				 --mount type=bind,source=${BUILDSH_SCRIPT_DIR}/,target=/var/tmp/catalyst-container/scripts/ \
+				 --mount type=bind,source=${CATALYST_CONTAINER_DISTFILES_CACHE_DIR}/,target=/var/cache/distfiles/ \
+				 --mount type=bind,source=${CATALYST_CONTAINER_BINPKGS_CACHE_DIR}/,target=/var/cache/binpkgs/ \
+				 --mount type=bind,source=${CATALYST_BUILDS_DIR}/,target=/var/tmp/catalyst/builds/ \
+				 --mount type=bind,source=${CATALYST_SNAPSHOTS_DIR}/,target=/var/tmp/catalyst/snapshots/ \
+				 --mount type=bind,source=${CATALYST_PACKAGES_DIR}/,target=/var/tmp/catalyst/packages/ \
+				 --mount type=bind,source=${PORTDIR}/,target=/var/db/repos/gentoo/ \
                                  --mount type=bind,source=/proc/,target=/proc/ \
                                  --mount type=bind,source=/dev/,target=/dev/ \
                                  --mount type=bind,source=/sys/,target=/sys/ \
@@ -51,4 +50,3 @@ ${PWD}/build.sh \
 
 rm ${BUILDSH_SCRIPT_DIR}/stage.tar.xz
 rm ${BUILDSH_SCRIPT_DIR}/toExec.spec
-
