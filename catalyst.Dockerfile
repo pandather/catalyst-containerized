@@ -7,7 +7,7 @@ ARG BOOTSTRAP
 FROM --platform=$BUILDPLATFORM ${BOOTSTRAP:-alpine:3.11} as builder
 
 ARG SEED
-COPY /scripts/stage.tar.xz /gentoo/stage.tar.xz
+COPY /stage.tar.xz /gentoo/stage.tar.xz
 
 WORKDIR /gentoo
 
@@ -34,6 +34,7 @@ FROM scratch
 
 WORKDIR /
 COPY --from=builder /gentoo/ /
-COPY ${PWD}/scripts/ /var/tmp/catalyst-container/scripts/
+COPY /container-script.sh /root/container-script.sh
+COPY /toExec.spec /root/toExec.spec
 WORKDIR /root
-CMD ["/bin/bash", "/var/tmp/catalyst-container/scripts/container-script.sh"]
+CMD ["/bin/bash", "/root/container-script.sh"]

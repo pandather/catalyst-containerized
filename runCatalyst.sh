@@ -11,6 +11,7 @@ CATALYST_PACKAGES_DIR=${CATALYST_PACKAGES_DIR:=$CATALYST_CACHE_DIR/packages}
 BUILDSH_SCRIPT_DIR=${BUILDSH_SCRIPT_DIR:=$PWD/scripts}
 ARCH=${ARCH:=amd64}
 CONTAINER_NAME=${CONTAINER_NAME:=catalyst}
+CONTAINER_BUILD_DIR=${CONTAINER_BUILD_DIR:=$PWD}
 
 if [[ -z "${SPEC}" ]]; then
         echo "No spec specified"
@@ -32,14 +33,13 @@ fi
 
 mkdir -p ${CATALYST_CONTAINER_DISTFILES_CACHE_DIR} ${CATALYST_CONTAINER_BINPKGS_CACHE_DIR} ${CATALYST_BUILDS_DIR}/default ${CATALYST_PACKAGES_DIR} ${CATALYST_SNAPSHOTS_DIR} ${BUILDSH_SCRIPT_DIR} ${PORTDIR}
 
-cp ${SEED} ${BUILDSH_SCRIPT_DIR}/stage.tar.xz
-cp ${SPEC} ${BUILDSH_SCRIPT_DIR}/toExec.spec
+cp ${SEED} ${CONTAINER_BUILD_DIR}/stage.tar.xz
+cp ${SPEC} ${CONTAINER_BUILD_DIR}/toExec.spec
 
 docker rm -f ${CONTAINER_NAME}
 export CONTAINER_NAME ARCH
 ${PWD}/build.sh \
  && docker run -it --privileged --name ${CONTAINER_NAME} \
-				 --mount type=bind,source=${BUILDSH_SCRIPT_DIR}/,target=/var/tmp/catalyst-container/scripts/ \
 				 --mount type=bind,source=${CATALYST_CONTAINER_DISTFILES_CACHE_DIR}/,target=/var/cache/distfiles/ \
 				 --mount type=bind,source=${CATALYST_CONTAINER_BINPKGS_CACHE_DIR}/,target=/var/cache/binpkgs/ \
 				 --mount type=bind,source=${CATALYST_BUILDS_DIR}/,target=/var/tmp/catalyst/builds/ \
@@ -51,5 +51,5 @@ ${PWD}/build.sh \
                                  --mount type=bind,source=/sys/,target=/sys/ \
 				 gentoo/${CONTAINER_NAME}:${ARCH}
 
-rm ${BUILDSH_SCRIPT_DIR}/stage.tar.xz
-rm ${BUILDSH_SCRIPT_DIR}/toExec.spec
+rm ${CONTAINER_BUILD_DIR}/stage.tar.xz
+rm ${CONTAINER_BUILD_DIR}/toExec.spec
