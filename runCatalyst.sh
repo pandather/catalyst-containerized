@@ -9,7 +9,6 @@ CATALYST_BUILDS_DIR=${CATALYST_BUILDS_DIR:=$CATALYST_CACHE_DIR/builds}
 CATALYST_SNAPSHOTS_DIR=${CATALYST_SNAPSHOTS_DIR:=$CATALYST_CACHE_DIR/snapshots}
 CATALYST_PACKAGES_DIR=${CATALYST_PACKAGES_DIR:=$CATALYST_CACHE_DIR/packages}
 
-BUILDSH_SCRIPT_DIR=${BUILDSH_SCRIPT_DIR:=$PWD/scripts}
 ARCH=${ARCH:=amd64}
 CONTAINER_NAME=${CONTAINER_NAME:=catalyst}
 CONTAINER_BUILD_DIR=${CONTAINER_BUILD_DIR:=$PWD}
@@ -34,9 +33,6 @@ ${PWD}/build.sh \
 				 --mount type=bind,source=${CATALYST_SNAPSHOTS_DIR}/,target=/var/tmp/catalyst/snapshots/ \
 				 --mount type=bind,source=${CATALYST_PACKAGES_DIR}/,target=/var/tmp/catalyst/packages/ \
 				 --mount type=bind,source=${CATALYST_CONTAINER_PORTDIR}/,target=/var/db/repos/gentoo/ \
-                                 --mount type=bind,source=/proc/,target=/proc/ \
-                                 --mount type=bind,source=/dev/,target=/dev/ \
-                                 --mount type=bind,source=/sys/,target=/sys/ \
 				 gentoo/${CONTAINER_NAME}:${ARCH}
 
 rm ${CONTAINER_BUILD_DIR}/stage.tar.xz

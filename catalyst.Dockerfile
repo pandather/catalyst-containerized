@@ -28,7 +28,6 @@ RUN echo "Building Catalyst Gentoo Container image for ${ARCH}" \
  && echo 'UTC' > etc/timezone \
  && mkdir -p var/db/repos/gentoo/ \
  && rm ${STAGE}
-# && rm ${STAGE}.DIGESTS ${STAGE}.CONTENTS.gz ${STAGE}
 
 FROM scratch
 
