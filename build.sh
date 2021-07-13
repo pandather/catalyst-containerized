@@ -1,20 +1,16 @@
 #!/bin/bash
 
-# Used to create Gentoo seed and portage containers simply by specifying a
-# SEED env variable.
-# Example usage: SEED=./stage3-amd64-latest.tar.xz ./build.sh
+# Used to create Gentoo stage3 and portage containers simply by specifying a
+# TARGET env variable.
+# Example usage: TARGET=stage3-amd64-openrc ./build.sh
 
-if [[ -z "$SEED" ]]; then
-	echo "No seed specified"
-	exit 1
-fi
-
-if [[ -z "$CONTAINER_NAME" ]]; then
-	CONTAINER_NAME=catalyst
+if [[ -z "$TARGET" ]]; then
+        echo "TARGET environment variable must be set e.g. TARGET=stage3-amd64."
+        exit 1
 fi
 
 # Split the TARGET variable into three elements separated by hyphens
-#IFS=- read -r NAME ARCH SUFFIX <<< "${TARGET}"
+IFS=- read -r NAME ARCH SUFFIX <<< "${TARGET}"
 
 VERSION=${VERSION:-$(date -u +%Y%m%d)}
 if [[ "${NAME}" == "portage" ]]; then
@@ -57,7 +53,7 @@ case $ARCH in
 esac
 
 # Handle targets with special characters in the suffix
-if [[ "${TARGET}" == "stage3-${ARCH}-hardened-nomultilib" ]]; then
+if [[ "${TARGET}" == "${NAME}-${ARCH}-hardened-nomultilib" ]]; then
 	SUFFIX="hardened+nomultilib"
 fi
 
@@ -71,8 +67,7 @@ docker buildx build \
 	--build-arg ARCH="${ARCH}" \
 	--build-arg MICROARCH="${MICROARCH}" \
 	--build-arg SUFFIX="${SUFFIX}" \
-	--build-arg SEED="${SEED}" \
-	--tag "${ORG}/${CONTAINER_NAME}:${ARCH}" \
+	--tag "${ORG}/${TARGET/-/:}${VERSION_SUFFIX}" \
 	--platform "linux/${DOCKER_ARCH}" \
 	--progress plain \
 	--load \

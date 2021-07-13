@@ -1,0 +1,10 @@
+subarch: amd64
+target: stage2
+version_stamp: openrc-2021-07-11
+rel_type: default
+profile: default/linux/amd64/17.1
+snapshot: latest
+source_subpath: default/stage1-amd64-openrc-2021-07-11
+compression_mode: pixz_x
+#portage_confdir: @REPO_DIR@/releases/portage/stages
+#portage_prefix: releng

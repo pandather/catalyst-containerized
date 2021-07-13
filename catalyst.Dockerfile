@@ -6,34 +6,39 @@
 ARG BOOTSTRAP
 FROM --platform=$BUILDPLATFORM ${BOOTSTRAP:-alpine:3.11} as builder
 
-ARG SEED
-COPY /stage.tar.xz /gentoo/stage.tar.xz
-
 WORKDIR /gentoo
-
 
 ARG ARCH=amd64
 ARG MICROARCH=amd64
-ARG SUFFIX=-openrc
+ARG SUFFIX="-openrc"
+ARG DIST="https://ftp-osl.osuosl.org/pub/gentoo/releases/${ARCH}/autobuilds"
+ARG SIGNING_KEY="0xBB572E0E2D182910"
 
-
-RUN echo "Building Catalyst Gentoo Container image for ${ARCH}" \
+RUN echo "Building Gentoo Container image for ${ARCH} ${SUFFIX} fetching from ${DIST}" \
  && apk --no-cache add ca-certificates gnupg tar wget xz \
- && STAGEPATH="/stage.tar.xz" \
- && STAGE="$(basename ${STAGEPATH})" \
- && echo Extracting the seed stage. \
- && tar xpf "${STAGE}" --xattrs-include='*.*' --numeric-owner \
- && echo Extraction complete, preparing for bootstrap. \
+ && STAGE3PATH="$(wget -O- "${DIST}/latest-stage3-${MICROARCH}${SUFFIX}.txt" | tail -n 1 | cut -f 1 -d ' ')" \
+ && echo "STAGE3PATH:" $STAGE3PATH \
+ && STAGE3="$(basename ${STAGE3PATH})" \
+ && wget -q "${DIST}/${STAGE3PATH}" "${DIST}/${STAGE3PATH}.CONTENTS.gz" "${DIST}/${STAGE3PATH}.DIGESTS.asc" \
+ && gpg --list-keys \
+ && echo "honor-http-proxy" >> ~/.gnupg/dirmngr.conf \
+ && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf \
+ && gpg --keyserver hkps://keys.gentoo.org --recv-keys ${SIGNING_KEY} \
+ && gpg --verify "${STAGE3}.DIGESTS.asc" \
+ && awk '/# SHA512 HASH/{getline; print}' ${STAGE3}.DIGESTS.asc | sha512sum -c \
+ && tar xpf "${STAGE3}" --xattrs-include='*.*' --numeric-owner \
  && ( sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf 2>/dev/null || true ) \
  && echo 'UTC' > etc/timezone \
  && mkdir -p var/db/repos/gentoo/ \
- && rm ${STAGE}
+ && mkdir -p mnt/catalyst \
+ && rm ${STAGE3}.DIGESTS.asc ${STAGE3}.CONTENTS.gz ${STAGE3}
 
 FROM scratch
 
 WORKDIR /
 COPY --from=builder /gentoo/ /
-COPY /container-script.sh /root/container-script.sh
-COPY /toExec.spec /root/toExec.spec
-WORKDIR /root
-CMD ["/bin/bash", "/root/container-script.sh"]
+RUN emerge-webrsync \
+ && emerge --oneshot --usepkg --buildpkg portage \
+ && emerge --usepkg --buildpkg dev-util/catalyst net-dns/bind-tools app-arch/pixz \
+ && libtool --finish /usr/lib64
+CMD ["/bin/bash", "/mnt/catalyst/container-script.sh"]
