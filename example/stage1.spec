@@ -3,7 +3,7 @@ target: stage1
 version_stamp: openrc-2021-07-11
 rel_type: default
 profile: default/linux/amd64/17.1
-snapshot: 2021-07-11
+snapshot: latest
 source_subpath: default/stage3-amd64-openrc-latest
 compression_mode: pixz_x
 update_seed: yes
