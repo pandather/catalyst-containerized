@@ -16,9 +16,8 @@ if [[ "${TARGET}" == "${NAME}-${ARCH}-hardened-nomultilib" ]]; then
 fi
 
 ORG=${ORG:-gentoo}
-VERSION=${VERSION:-catalyst-$(date -u +%Y%m%d)}
+VERSION=${VERSION:-$(date -u +%Y%m%d)}
 VERSION_SUFFIX="-${VERSION}"
-CONTAINER_NAME=${CONTAINER_NAME:=$TARGET$VERSION_SUFFIX}
 export ORG VERSION TARGET
 
 ${CONTAINER_BUILD_DIR}/build.sh

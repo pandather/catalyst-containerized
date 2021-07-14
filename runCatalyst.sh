@@ -22,7 +22,7 @@ if [[ "${TARGET}" == "${NAME}-${ARCH}-hardened-nomultilib" ]]; then
 fi
 
 ORG=${ORG:-gentoo}
-VERSION=${VERSION:-catalyst-$(date -u +%Y%m%d)}
+VERSION=${VERSION:-$(date -u +%Y%m%d)}
 VERSION_SUFFIX="-${VERSION}"
 CONTAINER_NAME=${CONTAINER_NAME:=$TARGET$VERSION_SUFFIX}
 export ORG VERSION TARGET
@@ -41,6 +41,6 @@ docker run -it --privileged --name ${CONTAINER_NAME} \
 				 --mount type=bind,source=${CATALYST_PACKAGES_DIR},target=/var/tmp/catalyst/packages \
 				 --mount type=bind,source=${CATALYST_REPO_DIR},target=/var/db/repos/gentoo \
 				 --mount type=bind,source=${SPEC},target=/mnt/catalyst/toExec.spec,readonly \
-				 --mount type=bind,source=${CONTAINER_BUILD_DIR}/container-script.sh,target=/mnt/catalyst/container-script.sh \
-				 ${ORG}/${TARGET/-/:}${VERSION_SUFFIX}
+				 --mount type=bind,source=${CONTAINER_BUILD_DIR}/container-script.sh,target=/mnt/catalyst/container-script.sh,readonly \
+				 ${ORG}/catalyst:${TARGET}${VERSION_SUFFIX}
 docker rm -f ${CONTAINER_NAME}

@@ -38,7 +38,7 @@ FROM scratch
 WORKDIR /
 COPY --from=builder /gentoo/ /
 RUN emerge-webrsync \
- && emerge --oneshot --usepkg --buildpkg portage \
- && emerge --usepkg --buildpkg dev-util/catalyst net-dns/bind-tools app-arch/pixz \
+ && emerge --update portage \
+ && emerge --update dev-util/catalyst net-dns/bind-tools app-arch/pixz \
  && libtool --finish /usr/lib64
 CMD ["/bin/bash", "/mnt/catalyst/container-script.sh"]

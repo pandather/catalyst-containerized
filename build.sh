@@ -67,7 +67,7 @@ docker buildx build \
 	--build-arg ARCH="${ARCH}" \
 	--build-arg MICROARCH="${MICROARCH}" \
 	--build-arg SUFFIX="${SUFFIX}" \
-	--tag "${ORG}/${TARGET/-/:}${VERSION_SUFFIX}" \
+	--tag "${ORG}/catalyst:${TARGET}${VERSION_SUFFIX}" \
 	--platform "linux/${DOCKER_ARCH}" \
 	--progress plain \
 	--load \
