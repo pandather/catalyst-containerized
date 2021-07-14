@@ -1,6 +1,6 @@
 #!/bin/bash
 if [[ ! -f "$1" ]]; then
-    "Please specify a spec like 'exampleLaunch.sh ${PWD}/stage1.spec'"
+    "Please specify a spec like 'exampleLaunch.sh ${PWD}/stage1.spec', ensure an absolute path."
 fi
 cd ..
 source ./example/env.sh

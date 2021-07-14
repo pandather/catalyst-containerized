@@ -28,7 +28,7 @@ CONTAINER_NAME=${CONTAINER_NAME:=$TARGET$VERSION_SUFFIX}
 export ORG VERSION TARGET
 
 if [[ ! -f "${SPEC}" ]]; then
-        echo "No spec specified"
+        echo "No spec specified, or passed relative path, absolute path required."
         exit 1
 fi
 
