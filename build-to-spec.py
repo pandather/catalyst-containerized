@@ -119,8 +119,6 @@ def preparePrefix(prefix, subDict, options):
             subtargets[key] = value
         else:
             options[key] = value
-    stageTargets = subtargets.keys().ordered()
-    print(stageTargets)
     for target, target_opts in subtargets.items():
         filename = ''
         if prefix == 'iso':
