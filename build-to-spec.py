@@ -16,6 +16,10 @@ specOptionList = ['subarch', 'target', 'version_stamp', 'rel_type', 'profile', '
 
 defaultStageTarget = 'openrc'
 
+universallyNeeded = ['/etc/catalyst/catalyst.conf', '/etc/catalyst/catalysstrc']
+
+perStageNeeded = ['profile', 'source_subpath', 'portage_confdir', 'portage_overlay', 'pkgcache_path']
+
 targetStages = {}
 rootNodes = []
 def place_subtarget(potential_target, subtarget):
@@ -36,7 +40,17 @@ def getNodeLevel(node):
         return 0
     else:
         return 1 + getNodeLevel(node.parent)
-                
+
+def getPathsForDockerMount(targetSet, first):
+    output = os.linesep.join(universallyNeeded) if first else ''
+    first = False
+    for item in perStageNeeded:
+        if targetSet.target.item:
+            output = '{}{}{}'.format(output, targetSet.target.item, os.linesep)
+    for subtarget in targetSet.subtargets:
+        output = '{}{}{}'.format(output, getPathsForDockerMount(subtarget, first), os.linesep)
+    return output
+
 class TargetSet:
     def writeOut(self):
         level = getNodeLevel(self)
@@ -116,7 +130,7 @@ def findOption(target, optionName):
         option = target.options[optionName]
     elif optionName in target.subdirectories.keys():
         option = target.subdirectories[optionName]
-    elif optionName == 'skip':
+    elif optionName == 'skip' or optionName in perStageNeeded:
         return False
     else:
         print('FATAL ERROR: Option \'' + optionName + '\' not found in target.')
@@ -238,6 +252,7 @@ try:
         printedOne = False
         for target_name, target in targetStages.items():
             target.writeOut()
+            print(target.getPathsForDockerMount(target))
 
 except tomli.TOMLDecodeError:
     print('Configuration file is not a valid TOML file.')
