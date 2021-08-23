@@ -3,25 +3,31 @@
 import tomli
 import io
 import os
+import datetime
+import pathlib
+import sys
 
 INCORRECT_PREFIX_ERROR = 1
 INVALID_STAGE_NUM_ERROR = 2
 OPTION_NOT_FOUND_ERROR = 3
 PREFIX_NOT_FOUND_ERROR = 4
 STAGE_TREE_ERROR = 5
+NO_BUILD_ERROR = 6
 
-optionsToRemove = ['arch', 'skip']
+optionsToRemove = ['arch', 'skip', 'repo_dir']
 
 specOptionList = ['subarch', 'target', 'version_stamp', 'rel_type', 'profile', 'snapshot', 'source_subpath', 'distcc_hosts', 'portage_confdir', 'portage_overlay', 'pkgcache_path']
 
 defaultStageTarget = 'openrc'
 
-universallyNeeded = ['/etc/catalyst/catalyst.conf', '/etc/catalyst/catalysstrc']
+universallyNeeded = ['/etc/catalyst', '/var/tmp/catalyst']
 
-perStageNeeded = ['profile', 'source_subpath', 'portage_confdir', 'portage_overlay', 'pkgcache_path']
+perStageNeeded = ['portage_confdir', 'portage_overlay', 'pkgcache_path']
 
 targetStages = {}
 rootNodes = []
+neededMounts = []
+
 def place_subtarget(potential_target, subtarget):
     if subtarget.generated_source_sp == potential_target.generated_output_sp:
         subtarget.source_sp = potential_target.output_sp
@@ -41,20 +47,34 @@ def getNodeLevel(node):
     else:
         return 1 + getNodeLevel(node.parent)
 
-def getPathsForDockerMount(targetSet, first):
-    output = os.linesep.join(universallyNeeded) if first else ''
-    first = False
+def getPathsForDockerMount(targetSet):
+    for item in universallyNeeded:
+        if item not in neededMounts:
+            neededMounts.append(item)
+    target = targetSet.target
     for item in perStageNeeded:
-        if targetSet.target.item:
-            output = '{}{}{}'.format(output, targetSet.target.item, os.linesep)
+        option = findOption(target, item)
+        if option:
+            repo_dir = target.repo_dir
+            if item == 'profile':
+                if option[:1] != '/':
+                    option = '/usr/portage/profiles/{}'.format(targetSet.target.profile)
+            if repo_dir:
+                option = option.replace('@REPO_DIR@', repo_dir)
+            timestamp = target.version
+            #option = option.replace('@TIMESTAMP@', str(datetime.date.today()))
+            if option[:1] != '/':
+                option = '/var/tmp/catalyst/{}/{}'.format('snapshots' if item == 'snapshot' else 'builds', option)
+
+            if option not in neededMounts:
+                neededMounts.append(option)
     for subtarget in targetSet.subtargets:
-        output = '{}{}{}'.format(output, getPathsForDockerMount(subtarget, first), os.linesep)
-    return output
+        getPathsForDockerMount(subtarget)
 
 class TargetSet:
     def writeOut(self):
         level = getNodeLevel(self)
-        filename = '{:02d}-{}'.format(getNodeLevel(self), self.target.filename)
+        filename = 'specs/{:02d}-{}'.format(getNodeLevel(self) + 1, self.target.filename)
         with open(filename, 'w') as file:
             file.write(str(self.target))
         for subtarget in self.subtargets:
@@ -108,7 +128,6 @@ class TargetSet:
         else:
             place_subtarget(targetStages[self.target.source_subpath], self)
 
-
     def process_skipped_stages(self):
         for subtarget in self.subtargets:
             skipped = subtarget.target.skip
@@ -132,6 +151,8 @@ def findOption(target, optionName):
         option = target.subdirectories[optionName]
     elif optionName == 'skip' or optionName in perStageNeeded:
         return False
+    elif optionName == 'repo_dir':
+        return None
     else:
         print('FATAL ERROR: Option \'' + optionName + '\' not found in target.')
         exit(OPTION_NOT_FOUND_ERROR)
@@ -148,6 +169,8 @@ def subdirectoriesRepr(dirPrefix, subdirs):
             newPrefix = 'boot/'
         if directory in specOptionList:
             newPrefix = ''
+        if directory == 'version':
+            directory = 'version_stamp'
         if directory in optionsToRemove:
             continue
         newPrefix = '{}{}'.format(newPrefix, directory)
@@ -187,6 +210,7 @@ class Target:
                 continue
             output = '{}{}:\t{}{}'.format(output, option, value, os.linesep)
         output = '{}{}'.format(output, subdirectoriesRepr(self.subpath, self.subdirectories))
+        output = output.replace('@REPO_DIR@', self.repo_dir)
         return output
 
     def __init__(self, subpath, prefix, options, subdirectories):
@@ -233,10 +257,15 @@ def preparePrefix(prefix, subDict, options):
         Target(option_path, prefix, optionsCopy(options), target_opts)
 
 try:
-    with open('ppc.build', encoding='utf-8') as f:
+    if len(sys.argv) != 2:
+        print('Run this script as "./build-to-spec.py targets.build"')
+        exit(NO_BUILD_ERROR)
+    with open(sys.argv[1], encoding='utf-8') as f:
         tomlDict = tomli.load(f)
-        if tomlDict['snapshot'] != None and tomlDict['snapshot']['snapshot'] != None:
-            with open('snapshot.spec', 'w') as specfile:
+        pathlib.Path('specs/').mkdir(parents=True, exist_ok=True)
+
+        if tomlDict['snapshot'] != None and tomlDict['snapshot']['target'] == 'snapshot':
+            with open('specs/00-snapshot.spec', 'w') as specfile:
                  specfile.write(subdirectoriesRepr('', tomlDict['snapshot']))
         prefixes = {}
         global_opts = {}
@@ -249,10 +278,12 @@ try:
             preparePrefix(prefix, prefixOptions, optionsCopy(global_opts))
         for target_name, target in targetStages.items():
             target.process_skipped_stages()
-        printedOne = False
         for target_name, target in targetStages.items():
             target.writeOut()
-            print(target.getPathsForDockerMount(target))
+            getPathsForDockerMount(target)
+        with open('paths.sh', 'w') as pathFile:
+            for mount in neededMounts:
+                pathFile.write('--mount type=bind,source={},target={}{}'.format(mount, mount, os.linesep))
 
 except tomli.TOMLDecodeError:
     print('Configuration file is not a valid TOML file.')

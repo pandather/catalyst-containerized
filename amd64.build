@@ -1,19 +1,19 @@
-title = "PowerPC Builds"
+title = "amd64 builds"
 
 [snapshot]
 target = "snapshot"
-snapshot = "@TIMESTAMP@"
+version = "@TIMESTAMP@"
 
 [build]
-arch = "ppc"
-subarch = "ppc"
-repo_dir = "/root/releng.git"
-
+arch = "amd64"
+subarch = "amd64"
+repo_dir = "/home/pandather/build/releng"
 version = "@TIMESTAMP@"
 rel_type = "default"
-profile = "default/linux/powerpc/ppc32/17.0"
-source_subpath = "default/stage3-ppc-openrc-latest"
+profile = "default/linux/amd64/17.1"
+source_subpath = "default/stage3-amd64-openrc-latest"
 portage_confdir = "@REPO_DIR@/releases/portage/stages"
+compression_mode = "pixz_x"
 snapshot = "@TIMESTAMP@"
 
 [build.default.stage1]
@@ -27,7 +27,6 @@ skip = true # Stage3 will be built directly from stage1
 
 [build.default.stage3]
 target = "stage3"
-compression_mode = "xz"
 
 [build.iso]
 portage_confdir = "@REPO_DIR@/releases/portage/isos"
@@ -344,26 +343,20 @@ empty = [
     "/var/tmp"
 ]
 
-[build.iso.stage2.kernel.ppc64]
-sources = "sys-kernel/gentoo-sources"
-config = "../../../kconfig/powerpc/ppc64.config"
-console = ["ttyS0,57600"]
-gk_kernargs = [
-    "--kernel-cc='gcc -m64'",
-    "--kernel-ld='ld -m elf64ppc'",
-    "--kernel-as='as -a64'"
-]
+[build.musl]
+rel_type = "musl"
+source_subpath = "musl/stage3-amd64-musl-latest"
+portage_confdir = "@REPO_DIR@/releases/portage/stages-musl"
+#portage_overlay = "/root/musl"
 
-[build.iso.stage2.kernel.ppc32]
-sources = "sys-kernel/gentoo-sources"
-config = "../../../kconfig/powerpc/ppc32.config"
+[build.musl.stage1]
+target = "stage1"
+update_seed = "yes"
+update_seed_command = "--update --deep --newuse @world"
 
-[build.iso.stage2.kernel.ibmpower]
-sources = "sys-kernel/gentoo-sources"
-config = "../../../kconfig/powerpc/installcd-ibm-4.19.config"
-console = ["ttyS0,9600", "hvc0", "hvsi0"]
-gk_kernargs = [
-    "--kernel-cc='gcc -m64'",
-    "--kernel-ld='ld -m elf64ppc'",
-    "--kernel-as='as -a64'"
-]
+[build.musl.stage2]
+target = "stage2"
+skip = true # Stage3 will be built directly from stage1
+
+[build.musl.stage3]
+target = "stage3"

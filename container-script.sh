@@ -1,3 +1,4 @@
 #!/bin/bash
-mkdir -p /var/tmp/catalyst/builds/default
-catalyst -f /mnt/catalyst/toExec.spec
+for file in /mnt/catalyst/specs/*.spec; do
+    catalyst -f "$file"
+done
